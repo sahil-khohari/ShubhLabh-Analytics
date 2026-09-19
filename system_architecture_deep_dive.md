@@ -1,12 +1,12 @@
-# ShubhLabh Analytics: System Architecture Deep Dive
+# ShubhLabh360: System Architecture Deep Dive
 
-This document serves as a comprehensive technical audit and architectural blueprint of the ShubhLabh Analytics platform. It details the system's structure, data flows, machine learning pipelines, and security mechanisms.
+This document serves as a comprehensive technical audit and architectural blueprint of the ShubhLabh360 platform. It details the system's structure, data flows, machine learning pipelines, and security mechanisms.
 
 ---
 
-## 1. High-Level System Architecture & Tech Stack
+## 1. High-Level Architecture Overview
 
-ShubhLabh Analytics is built as a monolithic web application structured around a modern decoupled client-server architecture. 
+ShubhLabh360 is built as a monolithic web application structured around a modern decoupled client-server architecture. 
 
 **Tech Stack:**
 *   **Frontend:** React (Vite), Tailwind CSS, Recharts, Lucide-React.

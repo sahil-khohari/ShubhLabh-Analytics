@@ -53,7 +53,7 @@ const Sidebar = () => {
       </div>
       
       <div className="p-4 text-xs text-slate-500 text-center border-t border-slate-700/50">
-        &copy; 2026 ShubhLabh Analytics
+        &copy; 2026 ShubhLabh360
       </div>
     </aside>
   );
