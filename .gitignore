@@ -3,9 +3,3 @@ node_modules/
 .venv/
 __pycache__/
 *.pyc
-*.db
-*.sqlite3
-last_otp.txt
-dist/
-build/
-.DS_Store

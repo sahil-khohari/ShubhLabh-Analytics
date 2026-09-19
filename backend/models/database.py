@@ -3,16 +3,7 @@ from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import sessionmaker
 
 # Assuming docker-compose setup is used
-import os
-from dotenv import load_dotenv
-
-load_dotenv()
-
-SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL")
-if not SQLALCHEMY_DATABASE_URL:
-    raise ValueError("DATABASE_URL environment variable is not set")
-if SQLALCHEMY_DATABASE_URL.startswith("postgres://"):
-    SQLALCHEMY_DATABASE_URL = SQLALCHEMY_DATABASE_URL.replace("postgres://", "postgresql://", 1)
+SQLALCHEMY_DATABASE_URL = "postgresql://retail_user:retail_password@localhost/retail_db"
 
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

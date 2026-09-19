@@ -38,7 +38,7 @@ const Login = () => {
             <TrendingUp className="text-accent" size={32} />
           </div>
           <h1 className="text-2xl font-bold text-text-main">Welcome Back</h1>
-          <p className="text-text-main/70 text-sm">Sign in to your ShubhLabh360 account</p>
+          <p className="text-text-main/70 text-sm">Sign in to your ShubhLabh Analytics account</p>
         </div>
 
 

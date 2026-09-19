@@ -77,7 +77,7 @@ const Signup = () => {
                 <TrendingUp className="text-accent" size={32} />
               </div>
               <h1 className="text-2xl font-bold text-text-main">Create Account</h1>
-              <p className="text-text-main/70 text-sm">Join ShubhLabh360 today</p>
+              <p className="text-text-main/70 text-sm">Join ShubhLabh Analytics today</p>
             </div>
 
             <form onSubmit={handleSignupSubmit} className="space-y-4">

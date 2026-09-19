@@ -227,12 +227,12 @@ const Profile = () => {
                         )}
 
                         <div className="md:col-span-2">
-                            <label className="block mb-2 text-slate-700 font-medium text-sm">Business Address</label>
+                            <label className="block mb-2 text-slate-700 font-medium text-sm">Store Address</label>
                             <textarea
                                 name="store_address"
                                 value={profile.store_address || ''}
                                 onChange={handleChange}
-                                placeholder="Full business address"
+                                placeholder="Full store address"
                                 rows="3"
                                 className="w-full p-3 rounded-lg border border-slate-200 bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent resize-y transition-shadow"
                             ></textarea>

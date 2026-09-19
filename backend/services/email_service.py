@@ -12,7 +12,7 @@ def send_otp_email(receiver_email: str, otp: str) -> bool:
     smtp_username = os.getenv("SMTP_USERNAME")
     smtp_password = os.getenv("SMTP_PASSWORD", "").replace(" ", "")
     smtp_from_email = os.getenv("SMTP_FROM_EMAIL")
-    smtp_from_name = os.getenv("SMTP_FROM_NAME", "ShubhLabh360")
+    smtp_from_name = os.getenv("SMTP_FROM_NAME", "ShubhLabh Analytics")
 
     if not all([smtp_host, smtp_port, smtp_username, smtp_password, smtp_from_email]):
         print("SMTP configuration is missing. Cannot send OTP email.")
@@ -20,7 +20,7 @@ def send_otp_email(receiver_email: str, otp: str) -> bool:
 
     try:
         msg = EmailMessage()
-        msg['Subject'] = 'Your Verification OTP - ShubhLabh360'
+        msg['Subject'] = 'Your Verification OTP - ShubhLabh Analytics'
         msg['From'] = f"{smtp_from_name} <{smtp_from_email}>"
         msg['To'] = receiver_email
         msg.set_content(

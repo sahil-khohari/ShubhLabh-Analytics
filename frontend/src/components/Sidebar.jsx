@@ -20,7 +20,7 @@ const Sidebar = () => {
     <aside className="w-64 h-screen bg-sidebar text-slate-100 flex flex-col fixed left-0 top-0 border-r border-slate-700/50">
       <div className="p-6 border-b border-slate-700/50 flex items-center gap-3">
         <TrendingUp className="text-accent" size={28} />
-        <h1 className="text-xl font-bold tracking-wide">ShubhLabh360</h1>
+        <h1 className="text-xl font-bold tracking-wide">ShubhLabh Analytics</h1>
       </div>
       
       <nav className="flex-1 p-4 space-y-2">
@@ -53,7 +53,7 @@ const Sidebar = () => {
       </div>
       
       <div className="p-4 text-xs text-slate-500 text-center border-t border-slate-700/50">
-        &copy; 2026 ShubhLabh360
+        &copy; 2026 ShubhLabh Analytics
       </div>
     </aside>
   );

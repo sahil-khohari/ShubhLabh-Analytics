@@ -4,7 +4,7 @@ import { Send, Bot, User, AlertCircle } from 'lucide-react';
 
 const AIAssistant = () => {
   const [messages, setMessages] = useState([
-    { role: 'ai', content: 'Hello! I am your ShubhLabh360 Assistant. Ask me anything about your business metrics, sales, or profit margins.' }
+    { role: 'ai', content: 'Hello! I am your ShubhLabh Analytics Assistant. Ask me anything about your sales, inventory, or profit margins.' }
   ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);

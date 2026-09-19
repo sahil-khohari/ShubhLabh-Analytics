@@ -5,7 +5,6 @@ from dotenv import load_dotenv
 from contextlib import asynccontextmanager
 import models
 import utils.cache as cache
-import os
 
 # Load environment variables
 load_dotenv()
@@ -17,8 +16,8 @@ async def lifespan(app: FastAPI):
     yield
 
 app = FastAPI(
-    title="ShubhLabh360 API",
-    description="Backend API for the ShubhLabh360 Platform",
+    title="ShubhLabh Analytics API",
+    description="Backend API for ShubhLabh Analytics",
     version="1.0.0",
     lifespan=lifespan
 )
@@ -36,15 +35,10 @@ app.include_router(inventory.router)
 app.include_router(expenses.router)
 app.include_router(employees.router)
 
-FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173,http://127.0.0.1:5173")
-if FRONTEND_URL == "*":
-    origins = ["*"]
-else:
-    origins = [origin.strip() for origin in FRONTEND_URL.split(",")]
-
+# Configure CORS for frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],  # Vite default port
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -52,7 +46,7 @@ app.add_middleware(
 
 @app.get("/")
 def read_root():
-    return {"message": "Welcome to the ShubhLabh360 API"}
+    return {"message": "Welcome to the ShubhLabh Analytics API"}
 
 @app.get("/health")
 def health_check():
