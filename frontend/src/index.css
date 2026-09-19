@@ -1,0 +1,17 @@
+@import "tailwindcss";
+
+@theme {
+  --color-canvas: #EEEEEE;
+  --color-sidebar: #222831;
+  --color-accent: #FFD369;
+  --color-text-main: #393E46;
+  --color-card: #FFFFFF;
+  --color-anomaly: #EF4444; /* Keep red for anomalies */
+}
+
+body {
+  margin: 0;
+  background-color: var(--color-canvas);
+  color: var(--color-text-main);
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+}
