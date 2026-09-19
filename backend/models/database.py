@@ -5,10 +5,13 @@ from sqlalchemy.orm import sessionmaker
 import os
 
 # Use DATABASE_URL from environment if available, otherwise default to localhost
-SQLALCHEMY_DATABASE_URL = os.environ.get(
+db_url = os.environ.get(
     "DATABASE_URL", 
     "postgresql://retail_user:retail_password@localhost/retail_db"
 )
+if db_url and db_url.startswith("postgres://"):
+    db_url = db_url.replace("postgres://", "postgresql://", 1)
+SQLALCHEMY_DATABASE_URL = db_url
 
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
