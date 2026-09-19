@@ -1,8 +1,85 @@
 # ShubhLabh Analytics
 
-ShubhLabh Analytics is a comprehensive platform designed for retail management and analytics, helping shop owners manage inventory, track sales, and use ML to forecast revenue and anomalies.
+ShubhLabh Analytics is a comprehensive platform designed for retail management and analytics, helping shop owners manage inventory, track sales, and use ML to forecast revenue and detect anomalies.
 
-## Demo Account for Evaluators & Interviewers
+## 🚀 Key Features
+
+*   **AI Business Assistant:** Interact with your data using natural language. The AI agent uses LangChain and the Gemini API, executing queries against a strictly isolated `/tmp` SQLite database generated on-the-fly for maximum tenant security.
+*   **Machine Learning Forecasting:** Advanced sales predictions and anomaly detection powered by Scikit-learn, XGBoost, SciPy, and Pandas.
+*   **Comprehensive Dashboard:** Real-time metrics on sales, profit margins, inventory levels, and employee performance.
+*   **Secure Multi-Tenant Architecture:** Strong data isolation using SQLAlchemy, JWT authentication, and bcrypt.
+*   **OTP & Email Verification:** Secure signup and credential recovery using SMTP.
+*   **High-Performance Caching:** Redis caching for fast OTP validation and optimized analytics retrieval.
+
+## 🛠️ Technology Stack
+
+**Frontend:**
+*   React 19 + Vite
+*   Tailwind CSS (Styling & Responsive Design)
+*   Recharts (Data Visualization)
+*   Lucide React (Icons)
+*   Axios (API Client)
+
+**Backend:**
+*   Python 3.13 + FastAPI
+*   SQLAlchemy & Alembic (PostgreSQL ORM & Migrations)
+*   Redis (Caching & OTP Storage)
+*   LangChain & Google Gemini API (AI Assistant)
+*   Scikit-learn, XGBoost, Pandas, Numpy (Machine Learning)
+*   Pytest (Test Suite)
+
+**Infrastructure:**
+*   Render (Deployment via Blueprint `render.yaml`)
+*   Docker & Docker Compose (Local Development)
+
+## 💻 Local Development Setup
+
+### Prerequisites
+*   Docker & Docker Compose
+*   Node.js (v18+)
+*   Python (3.11+)
+
+### 1. Database & Cache (Docker)
+Start the PostgreSQL and Redis containers using the provided Docker configuration:
+```bash
+docker-compose up -d
+```
+
+### 2. Backend Setup
+Navigate to the backend directory, install dependencies, and run migrations:
+```bash
+cd backend
+python3 -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+pip install -r requirements.txt
+
+# Create .env based on the example template
+cp .env.example .env
+
+# Run database migrations
+alembic upgrade head
+
+# Start the FastAPI server
+uvicorn main:app --reload
+```
+
+### 3. Frontend Setup
+Open a new terminal, navigate to the frontend directory, install dependencies, and start the development server:
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+## 🌐 Deployment (Render)
+
+This project is configured for automated deployment via Render Blueprints. 
+1. Connect your GitHub repository to Render.
+2. Render will automatically detect the `render.yaml` file.
+3. It will provision the PostgreSQL database, Redis instance, Python Web Service (Backend), and Static Site (Frontend) automatically.
+4. Supply your `GEMINI_API_KEY`, `SECRET_KEY`, and `SMTP_*` variables in the Render Dashboard environment settings.
+
+## 🧪 Demo Account & Testing
 
 To simplify evaluation and exploration without requiring manual sign-ups or OTP verifications, this repository comes with a fully isolated demo data generation script. 
 
@@ -14,9 +91,7 @@ To simplify evaluation and exploration without requiring manual sign-ups or OTP 
 
 ### Accessing the Demo (Local / Render)
 
-The actual credentials for this demo account are securely configured via environment variables.
-
-If you are an interviewer evaluating the application, please request the exact `DEMO_USER_EMAIL` and `DEMO_USER_PASSWORD` from the applicant directly.
+The actual credentials for this demo account are securely configured via environment variables. If you are an interviewer evaluating the application, please request the exact `DEMO_USER_EMAIL` and `DEMO_USER_PASSWORD` from the applicant directly.
 
 **For Operators deploying to Render / Locally:**
 1. Populate your `.env` (or Render Environment tab) with:
