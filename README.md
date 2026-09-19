@@ -29,7 +29,6 @@ ShubhLabh Analytics is a comprehensive platform designed for retail management a
 *   Pytest (Test Suite)
 
 **Infrastructure:**
-*   Render (Deployment via Blueprint `render.yaml`)
 *   Docker & Docker Compose (Local Development)
 
 ## 💻 Local Development Setup
@@ -71,13 +70,6 @@ npm install
 npm run dev
 ```
 
-## 🌐 Deployment (Render)
-
-This project is configured for automated deployment via Render Blueprints. 
-1. Connect your GitHub repository to Render.
-2. Render will automatically detect the `render.yaml` file.
-3. It will provision the PostgreSQL database, Redis instance, Python Web Service (Backend), and Static Site (Frontend) automatically.
-4. Supply your `GEMINI_API_KEY`, `SECRET_KEY`, and `SMTP_*` variables in the Render Dashboard environment settings.
 
 ## 🧪 Demo Account & Testing
 
@@ -89,11 +81,11 @@ To simplify evaluation and exploration without requiring manual sign-ups or OTP 
 - Populates realistic historical transaction data, products, inventory, expenses, and employee records spanning back 6 months.
 - Ensures all ML forecasting endpoints and AI Assistant interactions immediately yield valuable insights.
 
-### Accessing the Demo (Local / Render)
+### Accessing the Demo (Local)
 
 The actual credentials for this demo account are securely configured via environment variables. If you are an interviewer evaluating the application, please request the exact `DEMO_USER_EMAIL` and `DEMO_USER_PASSWORD` from the applicant directly.
 
-**For Operators deploying to Render / Locally:**
+**For Operators deploying Locally:**
 1. Populate your `.env` (or Render Environment tab) with:
    ```env
    DEMO_USER_EMAIL=demo@example.com
