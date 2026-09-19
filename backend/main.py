@@ -35,11 +35,18 @@ app.include_router(inventory.router)
 app.include_router(expenses.router)
 app.include_router(employees.router)
 
+import os
+
 # Configure CORS for frontend
+frontend_url = os.environ.get("FRONTEND_URL", "http://localhost:5173")
+allow_origins = ["http://localhost:5173", "http://127.0.0.1:5173"]
+if frontend_url != "*" and frontend_url not in allow_origins:
+    allow_origins.append(frontend_url)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],  # Vite default port
-    allow_credentials=True,
+    allow_origins=["*"] if frontend_url == "*" else allow_origins,
+    allow_credentials=True if frontend_url != "*" else False,  # credentials not allowed with "*"
     allow_methods=["*"],
     allow_headers=["*"],
 )
