@@ -2,8 +2,13 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import sessionmaker
 
-# Assuming docker-compose setup is used
-SQLALCHEMY_DATABASE_URL = "postgresql://retail_user:retail_password@localhost/retail_db"
+import os
+
+# Use DATABASE_URL from environment if available, otherwise default to localhost
+SQLALCHEMY_DATABASE_URL = os.environ.get(
+    "DATABASE_URL", 
+    "postgresql://retail_user:retail_password@localhost/retail_db"
+)
 
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
