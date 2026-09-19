@@ -35,12 +35,12 @@ services:
           property: connectionString
       - key: REDIS_HOST
         fromService:
-          type: redis
+          type: keyvalue
           name: shubhlabh-cache
           property: host
       - key: REDIS_PORT
         fromService:
-          type: redis
+          type: keyvalue
           name: shubhlabh-cache
           property: port
       - key: SECRET_KEY
@@ -60,9 +60,10 @@ services:
       - key: SMTP_FROM_NAME
         value: "ShubhLabh Analytics"
 
-  - type: redis
+  - type: keyvalue
     name: shubhlabh-cache
     plan: free
+    ipAllowList: []
 
 databases:
   - name: shubhlabh-db
