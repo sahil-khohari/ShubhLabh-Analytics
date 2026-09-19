@@ -35,11 +35,18 @@ app.include_router(inventory.router)
 app.include_router(expenses.router)
 app.include_router(employees.router)
 
+import os
+
+frontend_url = os.environ.get("FRONTEND_URL", "http://localhost:5173")
+allow_origins = ["http://localhost:5173", "http://127.0.0.1:5173"]
+if frontend_url != "*" and frontend_url not in allow_origins:
+    allow_origins.append(frontend_url)
+
 # Configure CORS for frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],  # Vite default port
-    allow_credentials=True,
+    allow_origins=["*"] if frontend_url == "*" else allow_origins,
+    allow_credentials=True if frontend_url != "*" else False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -53,4 +60,6 @@ def health_check():
     return {"status": "ok"}
 
 if __name__ == "__main__":
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+    import os
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run("main:app", host="0.0.0.0", port=port, reload=True)

@@ -10,12 +10,20 @@ def test_register_user(client):
     assert "id" in data
 
 def test_register_duplicate_user(client):
+    from tests.conftest import TestingSessionLocal
+    from models.schemas import User
+    db = TestingSessionLocal()
+    user = db.query(User).filter(User.email == "test@example.com").first()
+    user.is_email_verified = True
+    db.commit()
+    db.close()
+
     response = client.post(
         "/auth/register",
         json={"name": "Test User 2", "email": "test@example.com", "password": "securepassword"}
     )
     assert response.status_code == 400
-    assert response.json()["detail"] == "Email already registered"
+    assert response.json()["detail"] == "Email already registered and verified."
 
 def test_login_success(client):
     response = client.post(

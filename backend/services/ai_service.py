@@ -1,12 +1,14 @@
 import os
 import re
+import tempfile
+import pandas as pd
 from dotenv import load_dotenv
 from langchain_community.utilities.sql_database import SQLDatabase
 from langchain_classic.chains.sql_database.query import create_sql_query_chain
 from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import StrOutputParser
-from langchain_core.runnables import RunnablePassthrough
 from sqlalchemy import create_engine
+from sqlalchemy.orm import Session
 
 # Load environment variables
 load_dotenv()
@@ -25,11 +27,6 @@ def get_llm():
             raise Exception("langchain-google-genai is not installed")
     else:
         raise Exception("No API key found for OpenAI or Google/Gemini")
-
-# Build the DB connection
-# We reuse the same URL format from models/database.py
-DATABASE_URL = "postgresql://retail_user:retail_password@localhost/retail_db"
-db = SQLDatabase.from_uri(DATABASE_URL)
 
 llm = get_llm()
 
@@ -53,23 +50,58 @@ def strip_sql_markdown(text: str) -> str:
         
     return text.strip()
 
-def ask_database(question: str) -> dict:
+def _create_isolated_ai_db(shop_id: int, db: Session) -> str:
     """
-    Takes a natural language question, generates SQL, executes it, 
+    Creates an isolated in-memory or temporary SQLite database 
+    containing ONLY the data for the authenticated shop_id.
+    """
+    temp_db = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
+    temp_db_path = temp_db.name
+    temp_db.close()
+    
+    sqlite_engine = create_engine(f"sqlite:///{temp_db_path}")
+    
+    # Tables to isolate for the AI
+    tables_queries = {
+        "shops": f"SELECT * FROM shops WHERE id = {shop_id}",
+        "products": f"SELECT * FROM products WHERE shop_id = {shop_id}",
+        "sales": f"SELECT * FROM sales WHERE shop_id = {shop_id}",
+        "inventory_transactions": f"SELECT * FROM inventory_transactions WHERE shop_id = {shop_id}",
+        "expenses": f"SELECT * FROM expenses WHERE shop_id = {shop_id}",
+        "employees": f"SELECT * FROM employees WHERE shop_id = {shop_id}"
+    }
+    
+    for table_name, query in tables_queries.items():
+        try:
+            df = pd.read_sql(query, db.bind)
+            df.to_sql(table_name, sqlite_engine, index=False, if_exists="replace")
+        except Exception as e:
+            # Table might not exist or error in read
+            print(f"Failed to isolate {table_name}: {e}")
+            
+    return temp_db_path
+
+def ask_database(question: str, shop_id: int, db: Session) -> dict:
+    """
+    Takes a natural language question, generates SQL, executes it against an ISOLATED DB, 
     and returns a conversational explanation.
     """
+    temp_db_path = ""
     try:
+        temp_db_path = _create_isolated_ai_db(shop_id, db)
+        temp_db_uri = f"sqlite:///{temp_db_path}"
+        
+        isolated_db = SQLDatabase.from_uri(temp_db_uri)
+        
         # Create the initial Text-to-SQL chain
-        # The built-in create_sql_query_chain generates the SQL query
-        generate_query_chain = create_sql_query_chain(llm, db)
+        generate_query_chain = create_sql_query_chain(llm, isolated_db)
         
         # Step 1: Generate SQL and strip markdown
         raw_sql_query = generate_query_chain.invoke({"question": question})
         sql_query = strip_sql_markdown(raw_sql_query)
         
-        # Step 2: Execute SQL against the database
-        # We manually execute it to capture the result robustly
-        query_result = db.run(sql_query)
+        # Step 2: Execute SQL against the ISOLATED database
+        query_result = isolated_db.run(sql_query)
         
         # Step 3: Pass the result back to the LLM for a final conversational answer
         answer_prompt = PromptTemplate.from_template(
@@ -106,3 +138,10 @@ def ask_database(question: str) -> dict:
         return {
             "error": error_msg
         }
+    finally:
+        # Cleanup temporary DB file
+        if temp_db_path and os.path.exists(temp_db_path):
+            try:
+                os.remove(temp_db_path)
+            except Exception:
+                pass

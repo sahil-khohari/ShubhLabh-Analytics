@@ -11,7 +11,20 @@ def test_ml_forecast_nonexistent_product(client):
     # To hit this, we need a valid JWT first
     # So we register and login
     client.post("/auth/register", json={"name": "Analytics User", "email": "analytics@example.com", "password": "password"})
-    login_resp = client.post("/auth/login", json={"email": "analytics@example.com", "password": "password"})
+    
+    from tests.conftest import TestingSessionLocal
+    from models.schemas import User
+    db = TestingSessionLocal()
+    user = db.query(User).first()
+    if user:
+        user.is_email_verified = True
+        db.commit()
+        user_email = user.email
+    else:
+        user_email = "analytics@example.com"
+    db.close()
+
+    login_resp = client.post("/auth/login", json={"email": user_email, "password": "password"})
     token = login_resp.json()["access_token"]
     headers = {"Authorization": f"Bearer {token}"}
     
