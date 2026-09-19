@@ -53,10 +53,8 @@ def upgrade() -> None:
     op.create_index(op.f('ix_inventory_transactions_product_id'), 'inventory_transactions', ['product_id'], unique=False)
     op.create_index(op.f('ix_inventory_transactions_shop_id'), 'inventory_transactions', ['shop_id'], unique=False)
     op.create_index(op.f('ix_inventory_transactions_timestamp'), 'inventory_transactions', ['timestamp'], unique=False)
-    op.execute("ALTER TABLE products ALTER COLUMN is_on_the_way DROP DEFAULT")
-    op.execute("ALTER TABLE products ALTER COLUMN is_on_the_way TYPE BOOLEAN USING is_on_the_way::integer::boolean")
-    op.execute("ALTER TABLE products ALTER COLUMN is_on_the_way SET DEFAULT false")
-    op.drop_constraint(op.f('products_product_code_key'), 'products', type_='unique')
+    op.add_column('products', sa.Column('is_on_the_way', sa.Boolean(), server_default='false', nullable=True))
+    op.add_column('products', sa.Column('product_code', sa.String(), nullable=True))
     op.create_index(op.f('ix_products_product_code'), 'products', ['product_code'], unique=True)
     op.create_index(op.f('ix_products_shop_id'), 'products', ['shop_id'], unique=False)
     op.create_index(op.f('ix_sales_product_id'), 'sales', ['product_id'], unique=False)
@@ -75,12 +73,8 @@ def downgrade() -> None:
     op.drop_index(op.f('ix_sales_product_id'), table_name='sales')
     op.drop_index(op.f('ix_products_shop_id'), table_name='products')
     op.drop_index(op.f('ix_products_product_code'), table_name='products')
-    op.create_unique_constraint(op.f('products_product_code_key'), 'products', ['product_code'], postgresql_nulls_not_distinct=False)
-    op.alter_column('products', 'is_on_the_way',
-               existing_type=sa.Boolean(),
-               type_=sa.INTEGER(),
-               existing_nullable=True,
-               existing_server_default=sa.text('0'))
+    op.drop_column('products', 'is_on_the_way')
+    op.drop_column('products', 'product_code')
     op.drop_index(op.f('ix_inventory_transactions_timestamp'), table_name='inventory_transactions')
     op.drop_index(op.f('ix_inventory_transactions_shop_id'), table_name='inventory_transactions')
     op.drop_index(op.f('ix_inventory_transactions_product_id'), table_name='inventory_transactions')
