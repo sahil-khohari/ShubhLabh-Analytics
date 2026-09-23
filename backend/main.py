@@ -2,6 +2,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 from dotenv import load_dotenv
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from contextlib import asynccontextmanager
 import models
 import utils.cache as cache
@@ -38,7 +40,7 @@ app.include_router(employees.router)
 import os
 
 frontend_url = os.environ.get("FRONTEND_URL", "http://localhost:5173")
-allow_origins = ["http://localhost:5173", "http://127.0.0.1:5173"]
+allow_origins = ["http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:8000", "http://127.0.0.1:8000"]
 if frontend_url != "*" and frontend_url not in allow_origins:
     allow_origins.append(frontend_url)
 
@@ -51,13 +53,28 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.get("/")
-def read_root():
-    return {"message": "Welcome to the ShubhLabh Analytics API"}
-
 @app.get("/health")
 def health_check():
     return {"status": "ok"}
+
+# Mount the static assets directly to avoid catchall latency for JS/CSS files
+frontend_dist = os.path.join(os.path.dirname(os.path.dirname(__file__)), "frontend", "dist")
+
+if os.path.isdir(os.path.join(frontend_dist, "assets")):
+    app.mount("/assets", StaticFiles(directory=os.path.join(frontend_dist, "assets")), name="assets")
+
+# The catchall MUST be at the very bottom, to serve the React app
+@app.get("/{catchall:path}")
+def serve_react_app(catchall: str):
+    file_path = os.path.join(frontend_dist, catchall)
+    if os.path.isfile(file_path):
+        return FileResponse(file_path)
+    
+    index_path = os.path.join(frontend_dist, "index.html")
+    if os.path.isfile(index_path):
+        return FileResponse(index_path)
+        
+    return {"message": "Welcome to ShubhLabh Analytics API. (Frontend build not found)."}
 
 if __name__ == "__main__":
     import os

@@ -103,10 +103,11 @@ const Expenses = () => {
                   data={chartData}
                   cx="50%"
                   cy="50%"
-                  innerRadius={60}
-                  outerRadius={80}
-                  paddingAngle={5}
+                  innerRadius={70}
+                  outerRadius={110}
+                  paddingAngle={3}
                   dataKey="value"
+                  stroke="none"
                 >
                   {chartData.map((entry, index) => {
                     let color = '#EF4444';
@@ -115,7 +116,7 @@ const Expenses = () => {
                       const expenseColors = ['#EF4444', '#DC2626', '#B91C1C', '#991B1B', '#7F1D1D'];
                       color = expenseColors[(index - 1) % expenseColors.length];
                     }
-                    return <Cell key={`cell-${index}`} fill={color} />
+                    return <Cell key={`cell-${index}`} fill={color} stroke="none" />
                   })}
                 </Pie>
                 <RechartsTooltip formatter={(value) => `₹${value.toLocaleString()}`} />

@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from pydantic import BaseModel
 
 from models.database import get_db
 import ml.forecasting as forecasting
@@ -15,6 +16,24 @@ router = APIRouter(
     dependencies=[Depends(get_current_user)]
 )
 
+class TrainModelRequest(BaseModel):
+    product_id: int
+
+@router.post("/train-forecast-model")
+def train_forecast_model(req: TrainModelRequest, shop: schemas.Shop = Depends(get_current_shop), db: Session = Depends(get_db)):
+    """
+    Trains and persists an XGBoost forecasting model for a specific product.
+    """
+    try:
+        data = forecasting.train_forecasting_model(db, shop.id, req.product_id)
+        if "error" in data:
+            raise HTTPException(status_code=400, detail=data["error"])
+        return data
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"ML Training Error: {str(e)}")
+
 @router.get("/forecast", response_model=api_schemas.ForecastResponse)
 def get_forecast(product_id: int, days: int = 7, shop: schemas.Shop = Depends(get_current_shop), db: Session = Depends(get_db)):
     """
@@ -29,6 +48,8 @@ def get_forecast(product_id: int, days: int = 7, shop: schemas.Shop = Depends(ge
         data = forecasting.predict_demand(db, shop.id, product_id, days)
         if not data or "error" in data:
             detail = data.get("error") if isinstance(data, dict) and "error" in data else "Product not found or not enough data to forecast"
+            if "not trained yet" in detail:
+                raise HTTPException(status_code=400, detail=detail)
             raise HTTPException(status_code=404, detail=detail)
             
         cache.set_cache(cache_key, data, expire_seconds=900)
