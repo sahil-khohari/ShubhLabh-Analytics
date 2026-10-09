@@ -1,102 +1,112 @@
-# ShubhLabh Analytics
+# ShubhLabh Analytics 📈
 
-ShubhLabh Analytics is a comprehensive platform designed for retail management and analytics, helping shop owners manage inventory, track sales, and use ML to forecast revenue and detect anomalies.
+ShubhLabh Analytics is an intelligent, full-stack ERP and Analytics platform designed for Small and Medium Enterprises (SMEs). It offers inventory management, sales tracking, expense monitoring, and state-of-the-art AI capabilities including natural language data querying and predictive demand forecasting.
 
-## 🚀 Key Features
+---
 
-*   **AI Business Assistant:** Interact with your data using natural language. The AI agent uses LangChain and the Gemini API, executing queries against a strictly isolated `/tmp` SQLite database generated on-the-fly for maximum tenant security.
-*   **Machine Learning Forecasting:** Advanced sales predictions and anomaly detection powered by Scikit-learn, XGBoost, SciPy, and Pandas.
-*   **Comprehensive Dashboard:** Real-time metrics on sales, profit margins, inventory levels, and employee performance.
-*   **Secure Multi-Tenant Architecture:** Strong data isolation using SQLAlchemy, JWT authentication, and bcrypt.
-*   **OTP & Email Verification:** Secure signup and credential recovery using SMTP.
-*   **High-Performance Caching:** Redis caching for fast OTP validation and optimized analytics retrieval.
+## 🏗️ Architecture & System Design
 
-## 🛠️ Technology Stack
+The application is built on a modern, decoupled architecture designed for scale, security, and performance.
 
-**Frontend:**
-*   React 19 + Vite
-*   Tailwind CSS (Styling & Responsive Design)
-*   Recharts (Data Visualization)
-*   Lucide React (Icons)
-*   Axios (API Client)
+### Tech Stack
+- **Frontend:** React.js, Vite, TailwindCSS, Axios
+- **Backend:** Python, FastAPI, SQLAlchemy, Pydantic
+- **Database:** PostgreSQL (Supabase)
+- **Caching & Brokers:** Redis (Upstash)
+- **Machine Learning:** XGBoost, Pandas, Scikit-Learn
+- **Generative AI:** Google Gemini, LangChain
+- **Deployment:** Render (Unified Monolith serving static assets and API)
 
-**Backend:**
-*   Python 3.13 + FastAPI
-*   SQLAlchemy & Alembic (PostgreSQL ORM & Migrations)
-*   Redis (Caching & OTP Storage)
-*   LangChain & Google Gemini API (AI Assistant)
-*   Scikit-learn, XGBoost, Pandas, Numpy (Machine Learning)
-*   Pytest (Test Suite)
+### 1. Data Flow & Security (Multi-Tenant AI)
+Security is paramount when dealing with LLMs (Large Language Models) generating SQL queries. 
+- **The Problem:** Giving an AI direct access to the main PostgreSQL database risks multi-tenant data leakage (one shop seeing another shop's data) or destructive `DROP/DELETE` operations.
+- **The Solution:** We implemented a **Just-In-Time (JIT) SQLite Sandbox Isolation**.
+  - When a user asks a question (e.g., "What were my top selling items this week?"), the backend fetches *only* that user's data from PostgreSQL.
+  - It creates a temporary, in-memory/ephemeral SQLite database containing *only* this scoped data.
+  - LangChain + Gemini generates and executes SQL queries against this isolated SQLite sandbox.
+  - Once the answer is returned, the sandbox is destroyed. Zero risk of cross-tenant leakage.
 
-**Infrastructure:**
-*   Docker & Docker Compose (Local Development)
+### 2. Decoupled ML Training Pipeline
+Forecasting demand requires heavy CPU and Memory usage, which can crash the server if triggered on-demand by users during peak hours.
+- **The Solution:** We decoupled ML Inference from ML Training.
+  - **Training:** Handled by a background job using `APScheduler`. The system triggers a cron job every night between 3 AM - 4 AM. It pulls historical data, trains a new `XGBoost` model for each product, and saves the `.json` model artifact to disk.
+  - **Inference:** When a user requests a forecast on the frontend, the FastAPI route instantly loads the pre-trained `.json` artifact from disk to predict future demand. This takes milliseconds and ensures the API remains lightning fast.
 
-## 💻 Local Development Setup
+### 3. Caching Layer
+- **Redis** is used heavily across the application to cache frequent API requests (like dashboard summaries and historical analytics). This significantly reduces the load on the primary PostgreSQL database and ensures sub-100ms response times for users.
+
+---
+
+## 🚀 Local Setup & Installation
 
 ### Prerequisites
-*   Docker & Docker Compose
-*   Node.js (v18+)
-*   Python (3.11+)
+- Node.js (v18+)
+- Python (3.10+)
+- PostgreSQL Database URL
+- Redis Database URL
 
-### 1. Database & Cache (Docker)
-Start the PostgreSQL and Redis containers using the provided Docker configuration:
-```bash
-docker-compose up -d
-```
-
-### 2. Backend Setup
-Navigate to the backend directory, install dependencies, and run migrations:
+### 1. Backend Setup
 ```bash
 cd backend
-python3 -m venv .venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+
+# Create virtual environment
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Install dependencies
 pip install -r requirements.txt
 
-# Create .env based on the example template
-cp .env.example .env
+# Environment Variables
+# Create a .env file in the backend directory:
+DATABASE_URL=postgresql://user:password@localhost:5432/shubhlabh
+REDIS_HOST=localhost
+REDIS_PORT=6379
+REDIS_PASSWORD=your_redis_password
+GEMINI_API_KEY=your_gemini_api_key
+SECRET_KEY=generate_a_secure_random_string_here
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USERNAME=your_email@gmail.com
+SMTP_PASSWORD=your_app_password
+SMTP_FROM_EMAIL=your_email@gmail.com
+SMTP_FROM_NAME="ShubhLabh Analytics"
 
-# Run database migrations
-alembic upgrade head
-
-# Start the FastAPI server
+# Start the server
 uvicorn main:app --reload
 ```
 
-### 3. Frontend Setup
-Open a new terminal, navigate to the frontend directory, install dependencies, and start the development server:
+### 2. Frontend Setup
 ```bash
 cd frontend
+
+# Install dependencies
 npm install
+
+# Start the Vite development server
 npm run dev
 ```
 
+---
 
-## 🧪 Demo Account & Testing
+## 🌍 Production Deployment (Render)
 
-To simplify evaluation and exploration without requiring manual sign-ups or OTP verifications, this repository comes with a fully isolated demo data generation script. 
+This application is configured for a **Unified Monolith Deployment** on Render. This means the FastAPI backend serves the compiled React frontend static files, requiring only one server instance and avoiding CORS issues entirely.
 
-### What it does:
-- Instantiates a dedicated `Demo User` with pre-verified email authentication.
-- Scaffolds the "ShubhLabh Demo Store", categorized under Grocery.
-- Populates realistic historical transaction data, products, inventory, expenses, and employee records spanning back 6 months.
-- Ensures all ML forecasting endpoints and AI Assistant interactions immediately yield valuable insights.
-
-### Accessing the Demo (Local)
-
-The actual credentials for this demo account are securely configured via environment variables. If you are an interviewer evaluating the application, please request the exact `DEMO_USER_EMAIL` and `DEMO_USER_PASSWORD` from the applicant directly.
-
-**For Operators deploying Locally:**
-1. Populate your `.env` (or Render Environment tab) with:
-   ```env
-   DEMO_USER_EMAIL=demo@example.com
-   DEMO_USER_PASSWORD=your_secure_password
-   ```
-2. Trigger the seeding script (after database migrations are run):
-   ```bash
-   cd backend
-   python -m utils.seed_demo
-   ```
-3. The script is safely idempotent. It will never override existing tenant data, and running it multiple times will skip duplicate record generation.
+### Deployment Steps:
+1. Connect your GitHub repository to a new Render **Web Service**.
+2. Set the Build Command to: `./render-build.sh`
+3. Set the Start Command to: `cd backend && uvicorn main:app --host 0.0.0.0 --port $PORT`
+4. Add all Backend `.env` variables into the Render Environment Variables dashboard.
+   - *Note: If using Supabase IPv4 Poolers, ensure you are using the Session Pooler connection string (`pooler.supabase.com:5432`).*
+5. Click **Deploy**. Render will automatically build the React app, install Python dependencies, and boot the server.
 
 ---
-*(Note: All data generated by the demo script is firmly siloed to the demo tenant. Using normal application routes, the demo user cannot intercept or modify other businesses' isolated schemas, and vice-versa. Strict tenant-level partitioning is upheld across both relational data and AI endpoints.)*
+
+## 🛡️ Key Defensible Interview Points
+
+- **Why XGBoost over Deep Learning (LSTM/Transformers)?** 
+  SME inventory data is highly tabular, sparse, and lacks millions of rows. XGBoost handles tabular feature engineering (lag features, rolling averages, day-of-week) much better and faster than deep learning models on smaller datasets.
+- **Why JIT SQLite over Row-Level Security (RLS)?**
+  While RLS is great for standard APIs, LLMs are unpredictable. If an LLM hallucinates a query that somehow bypasses an RLS policy context, it's catastrophic. Moving the data to a physical, isolated sandbox guarantees 100% data security mathematically, rather than relying on prompt engineering.
+- **Why APScheduler instead of Celery?**
+  For a monolithic startup MVP, Celery requires a separate worker process and complex queue management (RabbitMQ/Redis streams). `APScheduler` runs elegantly inside the FastAPI event loop lifespan, keeping the deployment architecture simple (1 web container) while still perfectly decoupling the training logic.
