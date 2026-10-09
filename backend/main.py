@@ -16,13 +16,7 @@ from fastapi import Request
 from fastapi.responses import JSONResponse
 import traceback
 
-@app.exception_handler(500)
-async def internal_exception_handler(request: Request, exc: Exception):
-    return JSONResponse(status_code=500, content={"detail": str(exc), "traceback": traceback.format_exc()})
 
-@app.exception_handler(Exception)
-async def global_exception_handler(request: Request, exc: Exception):
-    return JSONResponse(status_code=500, content={"detail": str(exc), "traceback": traceback.format_exc()})
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -38,6 +32,14 @@ app = FastAPI(
     version="1.0.0",
     lifespan=lifespan
 )
+
+@app.exception_handler(500)
+async def internal_exception_handler(request: Request, exc: Exception):
+    return JSONResponse(status_code=500, content={"detail": str(exc), "traceback": traceback.format_exc()})
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    return JSONResponse(status_code=500, content={"detail": str(exc), "traceback": traceback.format_exc()})
 
 from routers import auth, analytics, ml, ai, sales, inventory, expenses, employees, users
 
