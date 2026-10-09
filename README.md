@@ -21,7 +21,27 @@ The application is built on a modern, decoupled architecture designed for scale,
 Security is paramount when dealing with LLMs (Large Language Models) generating SQL queries. 
 - **The Problem:** Giving an AI direct access to the main PostgreSQL database risks multi-tenant data leakage (one shop seeing another shop's data) or destructive `DROP/DELETE` operations.
 - **The Solution:** We implemented a **Just-In-Time (JIT) SQLite Sandbox Isolation**.
-  - When a user asks a question (e.g., "What were my top selling items this week?"), the backend fetches *only* that user's data from PostgreSQL.
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant FastAPI
+    participant PostgreSQL
+    participant SQLite Sandbox
+    participant LangChain (Gemini)
+
+    User->>FastAPI: "What were my top selling items?"
+    FastAPI->>PostgreSQL: Fetch ONLY this user's data
+    PostgreSQL-->>FastAPI: Return Data
+    FastAPI->>SQLite Sandbox: Create ephemeral DB & load data
+    FastAPI->>LangChain (Gemini): Route query to agent
+    LangChain (Gemini)->>SQLite Sandbox: Execute generated SQL safely
+    SQLite Sandbox-->>FastAPI: Return query results
+    FastAPI->>SQLite Sandbox: Instantly destroy Sandbox
+    FastAPI-->>User: Return Natural Language Insights
+```
+
+  - When a user asks a question, the backend fetches *only* that user's data from PostgreSQL.
   - It creates a temporary, in-memory/ephemeral SQLite database containing *only* this scoped data.
   - LangChain + Gemini generates and executes SQL queries against this isolated SQLite sandbox.
   - Once the answer is returned, the sandbox is destroyed. Zero risk of cross-tenant leakage.
@@ -29,6 +49,23 @@ Security is paramount when dealing with LLMs (Large Language Models) generating 
 ### 2. Decoupled ML Training Pipeline
 Forecasting demand requires heavy CPU and Memory usage, which can crash the server if triggered on-demand by users during peak hours.
 - **The Solution:** We decoupled ML Inference from ML Training.
+
+```mermaid
+graph TD
+    subgraph Background Job (Training Pipeline)
+        Cron[APScheduler - 3:00 AM] --> FetchData[Fetch Historical Data]
+        FetchData --> TrainModel[Train XGBoost Models]
+        TrainModel --> SaveJSON[Save Models to Disk as .json]
+    end
+
+    subgraph Real-time API (Inference Pipeline)
+        UserRequest[User requests forecast] --> LoadJSON[Load .json Artifact]
+        LoadJSON --> Predict[Predict Future Demand in milliseconds]
+    end
+    
+    SaveJSON -.->|Provides Artifact| LoadJSON
+```
+
   - **Training:** Handled by a background job using `APScheduler`. The system triggers a cron job every night between 3 AM - 4 AM. It pulls historical data, trains a new `XGBoost` model for each product, and saves the `.json` model artifact to disk.
   - **Inference:** When a user requests a forecast on the frontend, the FastAPI route instantly loads the pre-trained `.json` artifact from disk to predict future demand. This takes milliseconds and ensures the API remains lightning fast.
 
