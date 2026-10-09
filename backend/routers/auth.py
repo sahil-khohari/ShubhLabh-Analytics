@@ -16,6 +16,9 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 @router.post("/register", response_model=UserResponse)
 def register(user: UserCreate, db: Session = Depends(get_db)):
     try:
+        if len(user.password.encode('utf-8')) > 72:
+            raise HTTPException(status_code=400, detail="Password must be 72 characters or fewer.")
+            
         db_user = db.query(User).filter(User.email == user.email).first()
         hashed_password = get_password_hash(user.password)
         
@@ -145,6 +148,13 @@ def resend_otp(req: ResendOTPRequest, db: Session = Depends(get_db)):
 
 @router.post("/login", response_model=Token)
 def login(user_data: UserLogin, db: Session = Depends(get_db)):
+    if len(user_data.password.encode('utf-8')) > 72:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect email or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+        
     user = db.query(User).filter(User.email == user_data.email).first()
     if not user or not verify_password(user_data.password, user.password_hash):
         raise HTTPException(
