@@ -15,71 +15,77 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 
 @router.post("/register", response_model=UserResponse)
 def register(user: UserCreate, db: Session = Depends(get_db)):
-    db_user = db.query(User).filter(User.email == user.email).first()
-    hashed_password = get_password_hash(user.password)
-    
-    if db_user:
-        if db_user.is_email_verified:
-            raise HTTPException(status_code=400, detail="Email already registered and verified.")
+    try:
+        db_user = db.query(User).filter(User.email == user.email).first()
+        hashed_password = get_password_hash(user.password)
         
-        # Update existing unverified user
-        db_user.name = user.name
-        db_user.password_hash = hashed_password
-        db_user.business_name = user.business_name
-        db_user.business_category = user.business_category
-        db_user.phone_number = user.phone_number
-        db_user.store_address = user.store_address
-        
-        # Update their associated shop
-        shop = db.query(Shop).filter(Shop.owner_id == db_user.id).first()
-        if shop:
-            shop.name = user.business_name or f"{user.name}'s Shop"
-            shop.category = user.business_category or "Other"
-            shop.location = user.store_address or "Not Provided"
+        if db_user:
+            if db_user.is_email_verified:
+                raise HTTPException(status_code=400, detail="Email already registered and verified.")
             
-        db.commit()
-        db.refresh(db_user)
-        new_user = db_user
-    else:
-        new_user = User(
-            name=user.name,
-            email=user.email,
-            password_hash=hashed_password,
-            role="owner",
-            business_name=user.business_name,
-            business_category=user.business_category,
-            phone_number=user.phone_number,
-            store_address=user.store_address,
-            is_email_verified=False
-        )
-        db.add(new_user)
-        db.flush()
+            # Update existing unverified user
+            db_user.name = user.name
+            db_user.password_hash = hashed_password
+            db_user.business_name = user.business_name
+            db_user.business_category = user.business_category
+            db_user.phone_number = user.phone_number
+            db_user.store_address = user.store_address
+            
+            # Update their associated shop
+            shop = db.query(Shop).filter(Shop.owner_id == db_user.id).first()
+            if shop:
+                shop.name = user.business_name or f"{user.name}'s Shop"
+                shop.category = user.business_category or "Other"
+                shop.location = user.store_address or "Not Provided"
+                
+            db.commit()
+            db.refresh(db_user)
+            new_user = db_user
+        else:
+            new_user = User(
+                name=user.name,
+                email=user.email,
+                password_hash=hashed_password,
+                role="owner",
+                business_name=user.business_name,
+                business_category=user.business_category,
+                phone_number=user.phone_number,
+                store_address=user.store_address,
+                is_email_verified=False
+            )
+            db.add(new_user)
+            db.flush()
 
-        new_shop = Shop(
-            owner_id=new_user.id,
-            name=user.business_name or f"{user.name}'s Shop",
-            category=user.business_category or "Other",
-            location=user.store_address or "Not Provided"
-        )
-        db.add(new_shop)
-        db.commit()
-        db.refresh(new_user)
-    
-    # Generate OTP
-    otp = "".join([str(secrets.randbelow(10)) for _ in range(6)])
-    hashed_otp = hashlib.sha256(otp.encode()).hexdigest()
-    
-    # Store OTP in Redis
-    cache_key = f"otp:{new_user.email}"
-    set_cache(cache_key, {"otp": hashed_otp, "attempts": 0}, expire_seconds=300)
-    
-    # Send email
-    email_sent = send_otp_email(new_user.email, otp)
-    if not email_sent:
-        # We don't delete the user because they might try again, but we should inform the frontend
-        raise HTTPException(status_code=500, detail="User created, but failed to send OTP email. Please try resending the OTP.")
-    
-    return new_user
+            new_shop = Shop(
+                owner_id=new_user.id,
+                name=user.business_name or f"{user.name}'s Shop",
+                category=user.business_category or "Other",
+                location=user.store_address or "Not Provided"
+            )
+            db.add(new_shop)
+            db.commit()
+            db.refresh(new_user)
+        
+        # Generate OTP
+        otp = "".join([str(secrets.randbelow(10)) for _ in range(6)])
+        hashed_otp = hashlib.sha256(otp.encode()).hexdigest()
+        
+        # Store OTP in Redis
+        cache_key = f"otp:{new_user.email}"
+        set_cache(cache_key, {"otp": hashed_otp, "attempts": 0}, expire_seconds=300)
+        
+        # Send email
+        email_sent = send_otp_email(new_user.email, otp)
+        if not email_sent:
+            # We don't delete the user because they might try again, but we should inform the frontend
+            raise HTTPException(status_code=500, detail="User created, but failed to send OTP email. Please try resending the OTP.")
+        
+        return new_user
+    except Exception as e:
+        import traceback
+        error_details = traceback.format_exc()
+        print("REGISTRATION CRASHED:", error_details)
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/verify-email")
 def verify_email(req: VerifyEmailRequest, db: Session = Depends(get_db)):

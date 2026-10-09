@@ -9,8 +9,19 @@ def init_redis():
     # Get Redis host from env (e.g. 'localhost' or 'redis' when in docker)
     redis_host = os.getenv("REDIS_HOST", "localhost")
     redis_port = int(os.getenv("REDIS_PORT", 6379))
+    redis_password = os.getenv("REDIS_PASSWORD")
+    
+    use_ssl = "upstash.io" in redis_host.lower()
+    
     try:
-        redis_client = redis.Redis(host=redis_host, port=redis_port, db=0, decode_responses=True)
+        redis_client = redis.Redis(
+            host=redis_host, 
+            port=redis_port, 
+            password=redis_password,
+            ssl=use_ssl,
+            db=0, 
+            decode_responses=True
+        )
         redis_client.ping()
         print("Connected to Redis successfully.")
     except Exception as e:
