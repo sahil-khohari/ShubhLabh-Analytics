@@ -12,12 +12,6 @@ import utils.scheduler as scheduler_utils
 # Load environment variables
 load_dotenv()
 
-from fastapi import Request
-from fastapi.responses import JSONResponse
-import traceback
-
-
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     models.database.Base.metadata.create_all(bind=models.database.engine)
@@ -32,14 +26,6 @@ app = FastAPI(
     version="1.0.0",
     lifespan=lifespan
 )
-
-@app.exception_handler(500)
-async def internal_exception_handler(request: Request, exc: Exception):
-    return JSONResponse(status_code=500, content={"detail": str(exc), "traceback": traceback.format_exc()})
-
-@app.exception_handler(Exception)
-async def global_exception_handler(request: Request, exc: Exception):
-    return JSONResponse(status_code=500, content={"detail": str(exc), "traceback": traceback.format_exc()})
 
 from routers import auth, analytics, ml, ai, sales, inventory, expenses, employees, users
 
@@ -69,6 +55,16 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+from seed import seed_data
+
+@app.get("/seed/{email}")
+def seed_database_endpoint(email: str):
+    try:
+        seed_data(email)
+        return {"message": f"Successfully seeded data for {email}!"}
+    except Exception as e:
+        return {"error": str(e)}
 
 @app.get("/health")
 def health_check():
