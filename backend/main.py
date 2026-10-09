@@ -7,6 +7,7 @@ from fastapi.responses import FileResponse
 from contextlib import asynccontextmanager
 import models
 import utils.cache as cache
+import utils.scheduler as scheduler_utils
 
 # Load environment variables
 load_dotenv()
@@ -15,7 +16,9 @@ load_dotenv()
 async def lifespan(app: FastAPI):
     models.database.Base.metadata.create_all(bind=models.database.engine)
     cache.init_redis()
+    scheduler_utils.start_scheduler()
     yield
+    scheduler_utils.stop_scheduler()
 
 app = FastAPI(
     title="ShubhLabh Analytics API",

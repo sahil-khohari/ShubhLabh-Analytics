@@ -99,3 +99,5 @@ xgboost==3.4.1
 xxhash==4.0.1
 yarl==1.24.5
 zstandard==0.25.0
+apscheduler==3.10.4
+apscheduler==3.10.4
