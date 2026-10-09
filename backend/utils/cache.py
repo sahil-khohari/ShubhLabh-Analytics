@@ -20,7 +20,9 @@ def init_redis():
             password=redis_password,
             ssl=use_ssl,
             db=0, 
-            decode_responses=True
+            decode_responses=True,
+            socket_connect_timeout=3,
+            socket_timeout=3
         )
         redis_client.ping()
         print("Connected to Redis successfully.")

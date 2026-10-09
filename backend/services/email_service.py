@@ -32,7 +32,7 @@ def send_otp_email(receiver_email: str, otp: str) -> bool:
             f"{smtp_from_name} Team"
         )
 
-        with smtplib.SMTP(smtp_host, int(smtp_port)) as server:
+        with smtplib.SMTP(smtp_host, int(smtp_port), timeout=10) as server:
             server.ehlo()
             server.starttls()
             server.ehlo()
